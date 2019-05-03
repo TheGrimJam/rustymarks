@@ -7,6 +7,7 @@ extern crate regex;
 use regex::Regex;
 use serde_json;
 use hashbrown::HashMap;
+use rand::seq::SliceRandom;
 
 fn return_target_file_contents() -> std::string::String {
 
@@ -44,8 +45,24 @@ fn convert_to_word_vector(text: std::string::String) -> Vec<String> {
 	words
 }
 
+fn weighted_random(pairs: Vec< (String, i32) >) {
+	let sum : i32 = pairs.iter().fold(0, |acc, x| acc + x.1);
+	// Oh noes. Runng out of battery.f32
+	// pick a random int from 1/total. 
+	//for weight/value in pairs	
+		// r -= weight
+		// if r <= 0: return value
+	}
+
+fn get_following_word(followMap : HashMap<String, i32>) -> String {
+	
+	"Bumpkiss".to_string()
+}
+
 fn main() {
 
+	// Time testing: 
+	let start = Instant::now();
 
 	let content = return_target_file_contents();
 	let processed_content = convert_to_word_vector(content);
@@ -53,8 +70,10 @@ fn main() {
 	let mut i : usize = 0;
 
 
-	// Time testing: 
-	let start = Instant::now();
+	// Random word selection. Used later.
+	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
+	println!("-------------------- \n Random start word: {:?}", random_word);
+
 
 	for word in &processed_content {
 		let next_word_index = i + 1; // Final word will error.
@@ -63,21 +82,12 @@ fn main() {
 
 
 		let mut inner_map = if word_map.contains_key(word) {
-
-			// Time testing: 
-			let start = Instant::now();
 			let map : HashMap<String, i32> = word_map.get(word).unwrap().to_owned();
-
-
-			let duration = start.elapsed();
-			println!("First conditional retrieval: {:?}", duration);
 			map
 		} else { // Create the inner map then add the word
 			let map: HashMap<String, i32> = HashMap::new();
 			map
 		};
-		// Time testing: 
-		let start = Instant::now();
 		if inner_map.contains_key(&next_word) {
 			let mut count = inner_map.get(&next_word).unwrap().to_owned();
  			count += 1;
@@ -86,9 +96,6 @@ fn main() {
 			inner_map.insert(next_word, 1);
 		};
 		word_map.insert(word.to_string(), inner_map);
-		
-		let duration = start.elapsed();
-		println!("Second conditional : {:?}", duration);
 
 		if i < processed_content.len()-2 {
 			i += 1;
@@ -96,9 +103,6 @@ fn main() {
 
 
 	}
-
-	let duration = start.elapsed();
-	println!("Loop time : {:?} for word list of {:?}", duration, processed_content.len());
 
 	
 	// Wee test to see if we ge the expected
@@ -114,4 +118,8 @@ fn main() {
 	let mut f = File::create(format!("{}{}", &args[1], ".mdl")).expect("Unable to create file");
     f.write_all(serialized_data_bytes).expect("Unable to write data");
 
+
+		
+    let duration = start.elapsed();
+    println!("Total runtime : {:?}", duration);
 }
