@@ -55,6 +55,21 @@ fn weighted_random(pairs: HashMap<String, i32>) -> String {
 	"FAILED".to_string()
 }
 
+fn make_sentence(word_map: HashMap<String, HashMap<String, i32>>, start_word: String) -> String{
+	// Baby version of this is optional length field, generate those words, return as string.AsMut
+
+	// Better version may be take the average sentence length from corpus and feed that in here. May require an adjustment
+	// of the data structure we save to file. 
+	// Random word selection. Used later.
+	let mut current_word : String = start_word.to_owned();
+	let mut output = vec![];
+	for n in 1..15 {
+		output.push(current_word.to_owned());
+		current_word = weighted_random(word_map[&current_word].to_owned());
+	}
+	output.join(" ")
+}
+
 fn main() {
 
 	// Time testing: 
@@ -66,7 +81,6 @@ fn main() {
 	let mut i : usize = 0;
 
 
-	// Random word selection. Used later.
 	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
 	println!("-------------------- \n Random start word: {:?}", random_word);
 
@@ -104,11 +118,11 @@ fn main() {
 	println!("Test hashmap : {:?}", word_map["Then"]);
 	println!("Test randomizer : {:?}", weighted_random(word_map["Then"].to_owned()));
 	
-	let mut current_word : String = random_word.to_owned();
-	for n in 1..1000000 {
-		print!("{} ", current_word);
-		current_word = weighted_random(word_map[&current_word].to_owned());
+	let mut output = vec![];
+	for i in 1..10 {
+		output.push(make_sentence(word_map.to_owned(), "Then".to_string()));
 	}
+	println!("Test make sentence: {:?}", output.join(". "));
 	// Test JSON serializer 
 	let output_word_map = word_map.to_owned();
 	let serialized_data = serde_json::to_string(&output_word_map).unwrap();
