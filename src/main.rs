@@ -45,7 +45,7 @@ fn convert_to_word_vector(text: std::string::String) -> Vec<String> {
 	words
 }
 
-fn weighted_random(pairs: Vec< (String, i32) >) -> String {
+fn weighted_random(pairs: HashMap<String, i32>) -> String {
 	let sum : i32 = pairs.iter().fold(0, |acc, x| acc + x.1);
 	let mut num = rand::thread_rng().gen_range(0, sum);
 	for pair in pairs {
@@ -53,11 +53,6 @@ fn weighted_random(pairs: Vec< (String, i32) >) -> String {
 		if num <= 0 { return pair.0; }
 	};
 	"FAILED".to_string()
-	}
-
-fn get_following_word(followMap : HashMap<String, i32>) -> String {
-	
-	"Bumpkiss".to_string()
 }
 
 fn main() {
@@ -105,9 +100,15 @@ fn main() {
 	}
 
 	
-	// Wee test to see if we ge the expected
+	// Wee lazy test to see if we're getting right-ish values
 	println!("Test hashmap : {:?}", word_map["Then"]);
+	println!("Test randomizer : {:?}", weighted_random(word_map["Then"].to_owned()));
 	
+	let mut current_word : String = random_word.to_owned();
+	for n in 1..100 {
+		print!("{} ", current_word);
+		current_word = weighted_random(word_map[&current_word].to_owned());
+	}
 	// Test JSON serializer 
 	let output_word_map = word_map.to_owned();
 	let serialized_data = serde_json::to_string(&output_word_map).unwrap();
