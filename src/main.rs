@@ -105,7 +105,7 @@ fn main() {
 	println!("Test randomizer : {:?}", weighted_random(word_map["Then"].to_owned()));
 	
 	let mut current_word : String = random_word.to_owned();
-	for n in 1..100 {
+	for n in 1..1000000 {
 		print!("{} ", current_word);
 		current_word = weighted_random(word_map[&current_word].to_owned());
 	}
