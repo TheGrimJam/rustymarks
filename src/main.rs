@@ -3,7 +3,7 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::time::Instant;
-extern crate regex;
+use rand::Rng;
 use regex::Regex;
 use serde_json;
 use hashbrown::HashMap;
@@ -45,13 +45,14 @@ fn convert_to_word_vector(text: std::string::String) -> Vec<String> {
 	words
 }
 
-fn weighted_random(pairs: Vec< (String, i32) >) {
+fn weighted_random(pairs: Vec< (String, i32) >) -> String {
 	let sum : i32 = pairs.iter().fold(0, |acc, x| acc + x.1);
-	// Oh noes. Runng out of battery.f32
-	// pick a random int from 1/total. 
-	//for weight/value in pairs	
-		// r -= weight
-		// if r <= 0: return value
+	let mut num = rand::thread_rng().gen_range(0, sum);
+	for pair in pairs {
+		num -= pair.1;
+		if num <= 0 { return pair.0; }
+	};
+	"FAILED".to_string()
 	}
 
 fn get_following_word(followMap : HashMap<String, i32>) -> String {
@@ -73,7 +74,6 @@ fn main() {
 	// Random word selection. Used later.
 	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
 	println!("-------------------- \n Random start word: {:?}", random_word);
-
 
 	for word in &processed_content {
 		let next_word_index = i + 1; // Final word will error.
