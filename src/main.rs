@@ -29,7 +29,7 @@ fn return_target_file_contents() -> std::string::String {
 	return contents;
 }
 
-fn convert_to_word_vector(text: std::string::String) -> Vec<String> {
+fn convert_to_word_vector(text: std::string::String, state_size : i32) -> Vec<String> {
 
 
 	// Time testing: 
@@ -37,12 +37,25 @@ fn convert_to_word_vector(text: std::string::String) -> Vec<String> {
 	// Extra cleaning needed here for punctuation + other weirdnesses
 	let space_match_re = Regex::new(r"[\n\r\s]+").unwrap();
 	let words: Vec<String>  = space_match_re.split(&text).map(|s| s.to_string()).collect();
-
+	let mut state_sized_words : Vec<String> = vec![];
+	if state_size > 1 {
+		let mut state_length : i32 = 0;
+		let mut state_string : String = "".to_string();
+		for word in &words {
+			state_string = format!("{} {}", state_string, word.to_string());
+			state_length += 1;
+			if state_length == 3 {
+				state_sized_words.push(state_string);
+				state_string = "".to_string();
+				state_length = 0;
+			}
+		}	
+	}
 
 	// Time testing: 
 	let duration = start.elapsed();
 	println!("Time ( convert_to_word_vector ): {:?}", duration);
-	words
+	state_sized_words
 }
 
 fn weighted_random(pairs: HashMap<String, i32>) -> String {
@@ -75,15 +88,16 @@ fn main() {
 	// Time testing: 
 	let start = Instant::now();
 
+	let state_size : i32 = 2;
 	let content = return_target_file_contents();
-	let processed_content = convert_to_word_vector(content);
+	let processed_content = convert_to_word_vector(content, state_size);
 	let mut word_map : HashMap<String, HashMap<String, i32>> = HashMap::new();
 	let mut i : usize = 0;
 
 
 	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
 	println!("-------------------- \n Random start word: {:?}", random_word);
-
+	println!("{:?}", processed_content);
 	for word in &processed_content {
 		let next_word_index = i + 1; // Final word will error.
 		let next_word = processed_content.get(next_word_index).unwrap().to_owned();
@@ -106,21 +120,16 @@ fn main() {
 		};
 		word_map.insert(word.to_string(), inner_map);
 
-		if i < processed_content.len()-2 {
+		if i < processed_content.len() - (2*state_size as usize) {
 			i += 1;
 		}
 
 
 	}
-
-	
-	// Wee lazy test to see if we're getting right-ish values
-	println!("Test hashmap : {:?}", word_map["Then"]);
-	println!("Test randomizer : {:?}", weighted_random(word_map["Then"].to_owned()));
 	
 	let mut output = vec![];
 	for i in 1..10 {
-		output.push(make_sentence(word_map.to_owned(), "Then".to_string()));
+		output.push(make_sentence(word_map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string()));
 	}
 	println!("Test make sentence: {:?}", output.join(". "));
 	// Test JSON serializer 
