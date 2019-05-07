@@ -68,7 +68,7 @@ fn weighted_random(pairs: HashMap<String, i32>) -> String {
 	"FAILED".to_string()
 }
 
-fn make_sentence(word_map: HashMap<String, HashMap<String, i32>>, start_word: String) -> String{
+fn make_sentence(model: HashMap<String, HashMap<String, i32>>, start_word: String) -> String{
 	// Baby version of this is optional length field, generate those words, return as string.AsMut
 
 	// Better version may be take the average sentence length from corpus and feed that in here. May require an adjustment
@@ -78,9 +78,17 @@ fn make_sentence(word_map: HashMap<String, HashMap<String, i32>>, start_word: St
 	let mut output = vec![];
 	for n in 1..15 {
 		output.push(current_word.to_owned());
-		current_word = weighted_random(word_map[&current_word].to_owned());
+		current_word = weighted_random(model[&current_word].to_owned());
 	}
 	output.join(" ")
+}
+
+fn join_models() {
+	// Join two model files ( i.e the nested hashmaps )
+}
+
+struct Model {
+	map : HashMap<String, HashMap<String, i32>>
 }
 
 fn main() {
@@ -88,24 +96,26 @@ fn main() {
 	// Time testing: 
 	let start = Instant::now();
 
-	let state_size : i32 = 2;
+	let state_size : i32 = 4;
 	let content = return_target_file_contents();
 	let processed_content = convert_to_word_vector(content, state_size);
-	let mut word_map : HashMap<String, HashMap<String, i32>> = HashMap::new();
+	let mut model = Model { map : HashMap::new(), };
 	let mut i : usize = 0;
+
+
 
 
 	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
 	println!("-------------------- \n Random start word: {:?}", random_word);
-	println!("{:?}", processed_content);
+
 	for word in &processed_content {
 		let next_word_index = i + 1; // Final word will error.
 		let next_word = processed_content.get(next_word_index).unwrap().to_owned();
 
 
 
-		let mut inner_map = if word_map.contains_key(word) {
-			let map : HashMap<String, i32> = word_map.get(word).unwrap().to_owned();
+		let mut inner_map = if model.map.contains_key(word) {
+			let map : HashMap<String, i32> = model.map.get(word).unwrap().to_owned();
 			map
 		} else { // Create the inner map then add the word
 			let map: HashMap<String, i32> = HashMap::new();
@@ -118,7 +128,7 @@ fn main() {
 		} else {
 			inner_map.insert(next_word, 1);
 		};
-		word_map.insert(word.to_string(), inner_map);
+		model.map.insert(word.to_string(), inner_map);
 
 		if i < processed_content.len() - (2*state_size as usize) {
 			i += 1;
@@ -129,12 +139,12 @@ fn main() {
 	
 	let mut output = vec![];
 	for i in 1..10 {
-		output.push(make_sentence(word_map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string()));
+		output.push(make_sentence(model.map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string()));
 	}
 	println!("Test make sentence: {:?}", output.join(". "));
 	// Test JSON serializer 
-	let output_word_map = word_map.to_owned();
-	let serialized_data = serde_json::to_string(&output_word_map).unwrap();
+	let output_model = model.map.to_owned();
+	let serialized_data = serde_json::to_string(&output_model).unwrap();
 	let serialized_data_bytes : &[u8] = serialized_data.as_bytes();
 
 	// Saving to a .mdl file
