@@ -95,13 +95,6 @@ fn join_models(modelVector : Vec<Model>) -> Model {
 	joined_model
 }
 
-/*
-Plain english explanation attempt of the above: We pass in a vector of models. We then instantiate a "joined_model" value
-which is a new empty instance of Model.
-
-We then loop over the passed in models, and if it is the first item, we clone it and put it into joined_models
-*/
-
 #[derive(Clone, Debug)] 
 struct Model {
 	map : HashMap<String, HashMap<String, i32>>
