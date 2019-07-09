@@ -83,13 +83,30 @@ fn make_sentence(model: HashMap<String, HashMap<String, i32>>, start_word: Strin
 	output.join(" ")
 }
 
-fn join_models() {
+fn join_models(modelVector : Vec<Model>) -> Model {
 	// Join two model files ( i.e the nested hashmaps )
+	let mut joined_model = Model { map : HashMap::new(), };
+	for (index, model) in modelVector.iter().enumerate() {
+		if index == 0 { joined_model = model.clone() } 
+		else {
+			joined_model.map.extend(model.map.clone());
+		};
+	}
+	joined_model
 }
 
+/*
+Plain english explanation attempt of the above: We pass in a vector of models. We then instantiate a "joined_model" value
+which is a new empty instance of Model.
+
+We then loop over the passed in models, and if it is the first item, we clone it and put it into joined_models
+*/
+
+#[derive(Clone, Debug)] 
 struct Model {
 	map : HashMap<String, HashMap<String, i32>>
 }
+
 
 fn main() {
 
@@ -101,9 +118,6 @@ fn main() {
 	let processed_content = convert_to_word_vector(content, state_size);
 	let mut model = Model { map : HashMap::new(), };
 	let mut i : usize = 0;
-
-
-
 
 	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
 	println!("-------------------- \n Random start word: {:?}", random_word);
@@ -152,7 +166,7 @@ fn main() {
 	let mut f = File::create(format!("{}{}", &args[1], ".mdl")).expect("Unable to create file");
     f.write_all(serialized_data_bytes).expect("Unable to write data");
 
-
+	join_models(vec![model]);
 		
     let duration = start.elapsed();
     println!("Total runtime : {:?}", duration);
