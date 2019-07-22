@@ -106,7 +106,7 @@ fn main() {
 	// Time testing: 
 	let start = Instant::now();
 
-	let state_size : i32 = 4;
+	let state_size : i32 = 10; // State size doesn't seem to be working properly here
 	let content = return_target_file_contents();
 	let processed_content = convert_to_word_vector(content, state_size);
 	let mut model = Model { map : HashMap::new(), };
@@ -115,10 +115,11 @@ fn main() {
 	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
 	println!("-------------------- \n Random start word: {:?}", random_word);
 
+	// This should likely be a function of it's own - content_processing
 	for word in &processed_content {
 		let next_word_index = i + 1; // Final word will error.
 		let next_word = processed_content.get(next_word_index).unwrap().to_owned();
-
+		println!("{}", word.clone());
 
 
 		let mut inner_map = if model.map.contains_key(word) {
@@ -140,10 +141,13 @@ fn main() {
 		if i < processed_content.len() - (2*state_size as usize) {
 			i += 1;
 		}
-
-
 	}
 	
+	// Should test this with another text source ot see if the output differs 
+	// Test model joining
+	model = join_models(vec![model.clone(), model]);
+
+	// Test make sentence
 	let mut output = vec![];
 	for i in 1..10 {
 		output.push(make_sentence(model.map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string()));
@@ -159,7 +163,7 @@ fn main() {
 	let mut f = File::create(format!("{}{}", &args[1], ".mdl")).expect("Unable to create file");
     f.write_all(serialized_data_bytes).expect("Unable to write data");
 
-	join_models(vec![model]);
+
 		
     let duration = start.elapsed();
     println!("Total runtime : {:?}", duration);
