@@ -8,6 +8,7 @@ use regex::Regex;
 use serde_json;
 use hashbrown::HashMap;
 use rand::seq::SliceRandom;
+mod models;
 
 fn return_target_file_contents() -> std::string::String { // Microseconds. This seems fine as is.
 	let args: Vec<String> = env::args().collect();
@@ -19,13 +20,7 @@ fn return_target_file_contents() -> std::string::String { // Microseconds. This 
 	return contents;
 }
 
-fn uppercase_first_letter(s: &str) -> String {
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-    }
-}
+
 
 fn convert_to_word_vector(text: std::string::String, state_size : i32) -> Vec<String> {
 	// Time testing: 
@@ -80,33 +75,24 @@ fn make_sentence(model: HashMap<String, HashMap<String, i32>>, start_word: Strin
 	output.join(" ")
 }
 
-fn join_models(modelVector : Vec<Model>) -> Model {
-	// Join two model files ( i.e the nested hashmaps )
-	let mut joined_model = Model { map : HashMap::new(), };
-	for (index, model) in modelVector.iter().enumerate() {
-		if index == 0 { joined_model = model.clone() } 
-		else {
-			joined_model.map.extend(model.map.clone());
-		};
-	}
-	joined_model
-}
 
-#[derive(Clone, Debug)] 
-struct Model {
-	map : HashMap<String, HashMap<String, i32>>
+fn uppercase_first_letter(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+    }
 }
-
 
 fn main() {
-
+	// The messy scripty part. Should be divided up.
 	// Time testing: 
 	let start = Instant::now();
 
 	let state_size : i32 = 5;
 	let content = return_target_file_contents();
 	let processed_content = convert_to_word_vector(content, state_size);
-	let mut model = Model { map : HashMap::new(), };
+	let mut model = models::Model { map : HashMap::new(), };
 	let mut i : usize = 0;
 
 	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
@@ -142,7 +128,7 @@ fn main() {
 	
 	// Should test this with another text source ot see if the output differs 
 	// Test model joining
-	model = join_models(vec![model.clone(), model]);
+	model = models::join_models(vec![model.clone(), model]);
 
 	// Test make sentence
 	let mut output = vec![];
