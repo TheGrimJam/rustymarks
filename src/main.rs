@@ -30,8 +30,6 @@ fn return_target_file_contents() -> std::string::String {
 }
 
 fn convert_to_word_vector(text: std::string::String, state_size : i32) -> Vec<String> {
-
-
 	// Time testing: 
 	let start = Instant::now();
 	// Extra cleaning needed here for punctuation + other weirdnesses
@@ -44,7 +42,7 @@ fn convert_to_word_vector(text: std::string::String, state_size : i32) -> Vec<St
 		for word in &words {
 			state_string = format!("{} {}", state_string, word.to_string());
 			state_length += 1;
-			if state_length == 3 {
+			if state_length == state_size {
 				state_sized_words.push(state_string);
 				state_string = "".to_string();
 				state_length = 0;
@@ -106,7 +104,7 @@ fn main() {
 	// Time testing: 
 	let start = Instant::now();
 
-	let state_size : i32 = 10; // State size doesn't seem to be working properly here
+	let state_size : i32 = 5;
 	let content = return_target_file_contents();
 	let processed_content = convert_to_word_vector(content, state_size);
 	let mut model = Model { map : HashMap::new(), };
