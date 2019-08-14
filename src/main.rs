@@ -9,24 +9,22 @@ use serde_json;
 use hashbrown::HashMap;
 use rand::seq::SliceRandom;
 
-fn return_target_file_contents() -> std::string::String {
-
-
-	// Time testing: 
-	let start = Instant::now();
-
+fn return_target_file_contents() -> std::string::String { // Microseconds. This seems fine as is.
 	let args: Vec<String> = env::args().collect();
 	println!("{:?}", args);
 	let filename = &args[1];
 	println!("In file... {}", filename);
 	let contents = fs::read_to_string(filename)
 				   .expect("Nah sorry mate, file is fucked");
-
-	// Time testing: 
-	let duration = start.elapsed();
-	println!("Time ( return_target_file_contents ): {:?}", duration);
-	
 	return contents;
+}
+
+fn uppercase_first_letter(s: &str) -> String {
+    let mut c = s.chars();
+    match c.next() {
+        None => String::new(),
+        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+    }
 }
 
 fn convert_to_word_vector(text: std::string::String, state_size : i32) -> Vec<String> {
@@ -43,7 +41,8 @@ fn convert_to_word_vector(text: std::string::String, state_size : i32) -> Vec<St
 			state_string = format!("{} {}", state_string, word.to_string());
 			state_length += 1;
 			if state_length == state_size {
-				state_sized_words.push(state_string);
+				let state_without_whitespace = state_string.trim().to_string();
+				state_sized_words.push(state_without_whitespace);
 				state_string = "".to_string();
 				state_length = 0;
 			}
@@ -115,9 +114,9 @@ fn main() {
 
 	// This should likely be a function of it's own - content_processing
 	for word in &processed_content {
-		let next_word_index = i + 1; // Final word will error.
+		let next_word_index = i + 1;
 		let next_word = processed_content.get(next_word_index).unwrap().to_owned();
-		println!("{}", word.clone());
+		//println!("{}", word.clone());
 
 
 		let mut inner_map = if model.map.contains_key(word) {
@@ -148,7 +147,9 @@ fn main() {
 	// Test make sentence
 	let mut output = vec![];
 	for i in 1..10 {
-		output.push(make_sentence(model.map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string()));
+		let mut output_string = make_sentence(model.map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string());
+		output_string = uppercase_first_letter(&output_string);
+		output.push(output_string);
 	}
 	println!("Test make sentence: {:?}", output.join(". "));
 	// Test JSON serializer 
