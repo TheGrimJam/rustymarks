@@ -1,4 +1,3 @@
-
 use std::fs::File;
 use std::io::Write;
 use std::time::Instant;
@@ -10,24 +9,12 @@ mod models;
 mod generator;
 mod import;
 
-fn main() {
-	// The messy scripty part. Should be divided up.
-	// Time testing: 
-	let start = Instant::now();
 
-	let state_size : i32 = 5;
-	let content = import::from_file();
-	let processed_content = generator::convert_to_word_vector(content, state_size);
-	let mut model = models::Model { map : HashMap::new(), };
+fn populate_model(model : &models::Model, word_list : &Vec<String>){
 	let mut i : usize = 0;
-
-	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
-	println!("-------------------- \n Random start word: {:?}", random_word);
-
-	// This should likely be a function of it's own - content_processing
-	for word in &processed_content {
+	for word in word_list {
 		let next_word_index = i + 1;
-		let next_word = processed_content.get(next_word_index).unwrap().to_owned();
+		let next_word = word_list.get(next_word_index).unwrap().to_owned();
 		let mut inner_map = if model.map.contains_key(word) {
 			let map : HashMap<String, i32> = model.map.get(word).unwrap().to_owned();
 			map
@@ -44,10 +31,27 @@ fn main() {
 		};
 		model.map.insert(word.to_string(), inner_map);
 
-		if i < processed_content.len() - (2*state_size as usize) {
+		if i < word_list.len() - (2*state_size as usize) {
 			i += 1;
 		}
 	}
+}
+fn main() {
+	// The messy scripty part. Should be divided up.
+	// Time testing: 
+	let start = Instant::now();
+	
+	let state_size : i32 = 5;
+
+	let mut model = models::Model { map : HashMap::new(), };
+	
+	let content = import::from_file();
+	let processed_content = generator::convert_to_word_vector(content, state_size);
+
+	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
+	println!("-------------------- \n Random start word: {:?}", random_word);
+
+	populate_model(&model, &processed_content);
 	
 	// Should test this with another text source ot see if the output differs 
 	// Test model joining
@@ -56,7 +60,7 @@ fn main() {
 	// Test make sentence
 	let mut output = vec![];
 	for i in 1..10 {
-		let mut output_string = generator::make_sentence(model.map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string());
+		let output_string = generator::make_sentence(model.map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string());
 		output.push(output_string);
 	}
 	println!("Test make sentence: {:?}", output.join(". "));
