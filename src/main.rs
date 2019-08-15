@@ -1,88 +1,14 @@
-use std::env;
-use std::fs;
+
 use std::fs::File;
 use std::io::Write;
 use std::time::Instant;
-use rand::Rng;
-use regex::Regex;
 use serde_json;
 use hashbrown::HashMap;
 use rand::seq::SliceRandom;
+use std::env;
 mod models;
-
-fn return_target_file_contents() -> std::string::String { // Microseconds. This seems fine as is.
-	let args: Vec<String> = env::args().collect();
-	println!("{:?}", args);
-	let filename = &args[1];
-	println!("In file... {}", filename);
-	let contents = fs::read_to_string(filename)
-				   .expect("Nah sorry mate, file is fucked");
-	return contents;
-}
-
-
-
-fn convert_to_word_vector(text: std::string::String, state_size : i32) -> Vec<String> {
-	// Time testing: 
-	let start = Instant::now();
-	// Extra cleaning needed here for punctuation + other weirdnesses
-	let space_match_re = Regex::new(r"[\n\r\s]+").unwrap();
-	let words: Vec<String>  = space_match_re.split(&text).map(|s| s.to_string()).collect();
-	let mut state_sized_words : Vec<String> = vec![];
-	if state_size > 1 {
-		let mut state_length : i32 = 0;
-		let mut state_string : String = "".to_string();
-		for word in &words {
-			state_string = format!("{} {}", state_string, word.to_string());
-			state_length += 1;
-			if state_length == state_size {
-				let state_without_whitespace = state_string.trim().to_string();
-				state_sized_words.push(state_without_whitespace);
-				state_string = "".to_string();
-				state_length = 0;
-			}
-		}	
-	}
-
-	// Time testing: 
-	let duration = start.elapsed();
-	println!("Time ( convert_to_word_vector ): {:?}", duration);
-	state_sized_words
-}
-
-fn weighted_random(pairs: HashMap<String, i32>) -> String {
-	let sum : i32 = pairs.iter().fold(0, |acc, x| acc + x.1);
-	let mut num = rand::thread_rng().gen_range(0, sum);
-	for pair in pairs {
-		num -= pair.1;
-		if num <= 0 { return pair.0; }
-	};
-	"FAILED".to_string()
-}
-
-fn make_sentence(model: HashMap<String, HashMap<String, i32>>, start_word: String) -> String{
-	// Baby version of this is optional length field, generate those words, return as string.AsMut
-
-	// Better version may be take the average sentence length from corpus and feed that in here. May require an adjustment
-	// of the data structure we save to file. 
-	// Random word selection. Used later.
-	let mut current_word : String = start_word.to_owned();
-	let mut output = vec![];
-	for n in 1..15 {
-		output.push(current_word.to_owned());
-		current_word = weighted_random(model[&current_word].to_owned());
-	}
-	output.join(" ")
-}
-
-
-fn uppercase_first_letter(s: &str) -> String {
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-    }
-}
+mod generator;
+mod import;
 
 fn main() {
 	// The messy scripty part. Should be divided up.
@@ -90,8 +16,8 @@ fn main() {
 	let start = Instant::now();
 
 	let state_size : i32 = 5;
-	let content = return_target_file_contents();
-	let processed_content = convert_to_word_vector(content, state_size);
+	let content = import::from_file();
+	let processed_content = generator::convert_to_word_vector(content, state_size);
 	let mut model = models::Model { map : HashMap::new(), };
 	let mut i : usize = 0;
 
@@ -102,9 +28,6 @@ fn main() {
 	for word in &processed_content {
 		let next_word_index = i + 1;
 		let next_word = processed_content.get(next_word_index).unwrap().to_owned();
-		//println!("{}", word.clone());
-
-
 		let mut inner_map = if model.map.contains_key(word) {
 			let map : HashMap<String, i32> = model.map.get(word).unwrap().to_owned();
 			map
@@ -133,8 +56,7 @@ fn main() {
 	// Test make sentence
 	let mut output = vec![];
 	for i in 1..10 {
-		let mut output_string = make_sentence(model.map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string());
-		output_string = uppercase_first_letter(&output_string);
+		let mut output_string = generator::make_sentence(model.map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string());
 		output.push(output_string);
 	}
 	println!("Test make sentence: {:?}", output.join(". "));
