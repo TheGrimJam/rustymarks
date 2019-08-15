@@ -9,9 +9,9 @@ mod models;
 mod generator;
 mod import;
 
-
-fn populate_model(model : &models::Model, word_list : &Vec<String>){
+fn populate_model(word_list : &Vec<String>) -> models::Model{
 	let mut i : usize = 0;
+	let mut model = models::Model { map : HashMap::new(), };
 	for word in word_list {
 		let next_word_index = i + 1;
 		let next_word = word_list.get(next_word_index).unwrap().to_owned();
@@ -31,36 +31,33 @@ fn populate_model(model : &models::Model, word_list : &Vec<String>){
 		};
 		model.map.insert(word.to_string(), inner_map);
 
-		if i < word_list.len() - (2*state_size as usize) {
+		if i < word_list.len() - (2*5 as usize) {
 			i += 1;
 		}
 	}
+	model
 }
 fn main() {
 	// The messy scripty part. Should be divided up.
 	// Time testing: 
 	let start = Instant::now();
-	
 	let state_size : i32 = 5;
-
-	let mut model = models::Model { map : HashMap::new(), };
 	
 	let content = import::from_file();
 	let processed_content = generator::convert_to_word_vector(content, state_size);
 
-	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
-	println!("-------------------- \n Random start word: {:?}", random_word);
-
-	populate_model(&model, &processed_content);
+	let mut model = populate_model(&processed_content);
 	
 	// Should test this with another text source ot see if the output differs 
 	// Test model joining
 	model = models::join_models(vec![model.clone(), model]);
 
 	// Test make sentence
+
+	let random_word = processed_content.choose(&mut rand::thread_rng()).unwrap();
 	let mut output = vec![];
 	for i in 1..10 {
-		let output_string = generator::make_sentence(model.map.to_owned(), processed_content.choose(&mut rand::thread_rng()).unwrap().to_string());
+		let output_string = generator::make_sentence(model.map.to_owned(), random_word.to_string());
 		output.push(output_string);
 	}
 	println!("Test make sentence: {:?}", output.join(". "));

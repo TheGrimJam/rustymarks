@@ -5,7 +5,6 @@
 use rand::Rng;
 use hashbrown::HashMap;
 use regex::Regex;
-use std::time::Instant;
 
 fn weighted_random(pairs: HashMap<String, i32>) -> String {
 	let sum : i32 = pairs.iter().fold(0, |acc, x| acc + x.1);
@@ -32,7 +31,6 @@ pub fn make_sentence(model: HashMap<String, HashMap<String, i32>>, start_word: S
     uppercase_first_letter(&output.join(" "))
 }
 
-
 fn uppercase_first_letter(s: &str) -> String {
     let mut c = s.chars();
     match c.next() {
@@ -42,8 +40,6 @@ fn uppercase_first_letter(s: &str) -> String {
 }
 
 pub fn convert_to_word_vector(text: std::string::String, state_size : i32) -> Vec<String> {
-	// Time testing: 
-	let start = Instant::now();
 	// Extra cleaning needed here for punctuation + other weirdnesses
 	let space_match_re = Regex::new(r"[\n\r\s]+").unwrap();
 	let words: Vec<String>  = space_match_re.split(&text).map(|s| s.to_string()).collect();
@@ -62,8 +58,5 @@ pub fn convert_to_word_vector(text: std::string::String, state_size : i32) -> Ve
 			}
 		}	
 	}
-	// Time testing: 
-	let duration = start.elapsed();
-	println!("Time ( convert_to_word_vector ): {:?}", duration);
 	state_sized_words
 }
